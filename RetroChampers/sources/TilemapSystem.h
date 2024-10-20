@@ -2,67 +2,62 @@
 
 namespace tms // Tile Map System
 {
-    class TilemapSystem
+    class TilemapSystem final
     {
     private:
-        struct TileData
+        // TILE STRUCT
+        struct TileData final
         {
         public:
+            Rectangle collisionBox;
+            int textureIDx = -1;
+            int textureIDy = -1;
+            bool isPassable;
+
             TileData(int x, int y, int idx, int idy, bool canPass)
-                : textureIDx(idx), textureIDy(idy), canPass(canPass)
+                : textureIDx(idx), textureIDy(idy), isPassable(canPass)
             {
-                collisionBox = { 
-                    static_cast<float>(x), static_cast<float>(y), 
-                    static_cast<float>(SIZE), static_cast<float>(SIZE)
+                collisionBox =
+                {
+                    static_cast<float>(x), static_cast<float>(y),
+                    static_cast<float>(TILE_SIZE), static_cast<float>(TILE_SIZE)
                 };
             }
-
-            Rectangle collisionBox = {};
-            const int SIZE = 64;
-            int textureIDx = {};
-            int textureIDy = {};
-            bool canPass = {};
         };
 
-        TilemapSystem();
-        static TilemapSystem* _instance;
-        static const int _mapSize = 100;
-        static const int _tileSize = 64;
+        // MAP STRUCT
+        struct Map final
+        {
+        public:
+            std::vector<TileData> tileList;
+            int mapW = 0;
+            int mapH = 0;
+        };
+
+    public:
+        // Singleton pattern
+        static void StaticInitialize();
+        static void StaticTerminate();
+        static TilemapSystem* Get();
+        TilemapSystem() = default;
+        ~TilemapSystem() = default;
+
+        void LoadMaps(const std::filesystem::path& filePath);
+
+        void SetActiveMap(int mapIndex);
+        std::vector<TileData>* GetActiveMapData() const;
+
+        // Return a map tile at a given index (safe access to TileData)
+        Rectangle GetTileCollisionBox(int index) const;
+        bool IsTilePassable(int index) const;
+        int GetTileTextureIDx(int index) const;
+        int GetTileTextureIDy(int index) const;
 
     private:
-        std::vector<TileData> map;
+        void ParseMapLayout(const std::vector<std::string>& mapLines, Map& map);
 
-    public:
-        static TilemapSystem* Get();
-        virtual ~TilemapSystem();
-
-        void LoadMapList(std::vector<char>& TileMapList);
-        std::vector<TileData> GetMap() const;
+        static const int TILE_SIZE = 64;
+        std::vector<Map> maps;
+        std::vector<TileData>* currentMapData = nullptr;
     };
-
-    class TileData
-    {
-        Rectangle collisionBox{};
-        const float size = 64.0f;
-        int textureIDx{};
-        int textureIDy{};
-        bool isPassable{};
-
-    public:
-        Rectangle GetCollisionBox() const { return collisionBox; }
-        void SetCollisionBox(Rectangle newRec) { collisionBox = newRec; }
-
-        float GetSize() const { return size; }
-
-        int GetIDx() const { return textureIDx; }
-        void SetIDx(int newID) { textureIDx = newID; }
-
-        int GetIDy() const { return textureIDy; }
-        void SetIDy(int newID) { textureIDy = newID; }
-
-        bool IsPassable() const { return isPassable; }
-        void SetPassable(const bool newBool) { isPassable = newBool; }
-    };
-
-
 }
